@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#070a14" />
+  <title>For Georgi</title>
+
+  <!--
+    ============================================================
+    CUSTOMIZATION: FONTS
+    Swap the Google Fonts below if you prefer a different pairing.
+    Headings  -> Cormorant Garamond (serif)
+    Body      -> Inter (sans-serif)
+    ============================================================
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Atmospheric background layers (stars, moon, aurora, grain) -->
+  <div class="sky" aria-hidden="true">
+    <div class="sky__gradient"></div>
+    <canvas id="starField" class="sky__stars"></canvas>
+    <div class="sky__moon-wrap">
+      <div class="sky__moon"></div>
+      <div class="sky__moon-glow"></div>
+    </div>
+    <div class="sky__aurora"></div>
+    <div class="sky__vignette"></div>
+  </div>
+
+  <!-- Floating particles layer -->
+  <canvas id="particles" class="particles" aria-hidden="true"></canvas>
+
+  <!-- Cursor trail (desktop only) -->
+  <div class="cursor-trail" aria-hidden="true"></div>
+
+  <!-- Film grain overlay -->
+  <div class="grain" aria-hidden="true"></div>
+
+  <!--
+    ============================================================
+    MUSIC
+    Placeholder track: assets/music.mp3
+    PUT YOUR MUSIC AT: assets/music.mp3
+    The music button appears in the top-right corner.
+    ============================================================
+  -->
+  <button class="music-toggle" id="musicToggle" type="button" aria-label="Play music" aria-pressed="false">
+    <span class="music-toggle__icon" aria-hidden="true">
+      <span class="music-toggle__bar"></span>
+      <span class="music-toggle__bar"></span>
+      <span class="music-toggle__bar"></span>
+      <span class="music-toggle__bar"></span>
+    </span>
+    <span class="music-toggle__label">music</span>
+  </button>
+
+  <div class="volume-wrap" id="volumeWrap" hidden>
+    <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.6" aria-label="Volume" />
+  </div>
+
+  <!-- Hidden audio element (no autoplay — browser friendly) -->
+  <!-- PUT YOUR MUSIC AT: assets/music.mp3 -->
+  <audio id="bgMusic" src="assets/music.mp3" loop preload="none"></audio>
+
+  <!-- Progress UI -->
+  <div class="progress" aria-label="Progress">
+    <span class="progress__label" id="progressLabel">01 / 07</span>
+    <div class="progress__dots" id="progressDots" role="group" aria-label="Sections"></div>
+  </div>
+
+  <!-- Minimal navigation -->
+  <div class="nav" aria-label="Navigation">
+    <button class="nav__btn" id="prevBtn" type="button" aria-label="Previous">‹</button>
+    <button class="nav__btn" id="restartBtn" type="button" aria-label="Restart">↺</button>
+    <button class="nav__btn" id="nextBtn" type="button" aria-label="Next">›</button>
+  </div>
+
+  <main class="stage" id="stage">
+    <!-- ============ SCREEN 1 — NIGHT SKY / INTRO ============ -->
+    <section class="screen is-active" data-screen="1" data-title="Intro">
+      <div class="screen__inner screen__inner--center">
+        <p class="eyebrow" data-reveal>somewhere between tonight and a thought</p>
+        <h1 class="display" data-reveal>For Georgi</h1>
+        <p class="lead" data-reveal>I made you something.</p>
+        <button class="btn btn--primary btn--glow intro-open" type="button">
+          <span class="btn__text">Open it</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ============ SCREEN 2 — INTERACTIVE ENVELOPE ============ -->
+    <section class="screen" data-screen="2" data-title="The Letter">
+      <div class="screen__inner screen__inner--center">
+        <p class="lead" data-reveal>There is something I wanted you to have.</p>
+
+        <div class="envelope" id="envelope">
+          <div class="envelope__back"></div>
+          <div class="envelope__letter" id="letter">
+            <div class="letter__paper">
+              <p class="letter__text" id="letterText"></p>
+              <span class="letter__sign">— always</span>
+            </div>
+          </div>
+          <div class="envelope__flap" id="flap"></div>
+          <div class="envelope__front"></div>
+          <div class="envelope__seal">✦</div>
+        </div>
+
+        <button class="btn btn--primary btn--glow" id="openLetterBtn" type="button" data-reveal>
+          <span class="btn__text">Open the letter</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ============ SCREEN 3 — THE NIGHT SKY INTERACTION ============ -->
+    <section class="screen" data-screen="3" data-title="Pick a Star">
+      <div class="screen__inner screen__inner--center">
+        <p class="lead" data-reveal>Pick a star.</p>
+        <p class="hint" data-reveal>Some are brighter than others.</p>
+
+        <div class="constellation" id="constellation" aria-label="Starry sky of clickable stars"></div>
+
+        <p class="found-counter" id="foundCounter" aria-live="polite"></p>
+        <div class="stage-message" id="stageMessage" aria-live="polite"></div>
+        <button class="btn btn--primary btn--glow is-hidden" id="toPhotoBtn" type="button">
+          <span class="btn__text">One more thing...</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ============ SCREEN 4 — INTERACTIVE PHOTO ============ -->
+    <section class="screen" data-screen="4" data-title="A Memory">
+      <div class="screen__inner screen__inner--center">
+        <p class="lead" data-reveal>A picture I'd keep in the dark.</p>
+
+        <!--
+          CUSTOMIZATION: PHOTO
+          PUT GEORGI'S PHOTO AT: assets/georgi.jpg
+          If missing, a dreamy dark placeholder (moon + stars) is shown.
+        -->
+        <figure class="photo-card" id="photoCard" tabindex="0" role="button" aria-label="Open the photo">
+          <img
+            class="photo-card__img"
+            id="photoImg"
+            src="assets/georgi.jpg"
+            alt="A photo of Georgi"
+            loading="lazy"
+          />
+          <div class="photo-card__fallback" aria-hidden="true">
+            <span class="photo-card__moon">☾</span>
+            <span class="photo-card__stars">✦ ✧ ✦</span>
+          </div>
+          <figcaption class="photo-card__caption">tap the memory</figcaption>
+        </figure>
+
+        <p class="photo-message" id="photoMessage" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <!-- ============ SCREEN 5 — DISTANCE ============ -->
+    <section class="screen" data-screen="5" data-title="The Distance">
+      <div class="screen__inner screen__inner--center">
+        <p class="lead" data-reveal>Two points. One sky.</p>
+
+        <div class="distance" id="distance">
+          <div class="distance__point distance__point--you">
+            <span class="distance__dot"></span>
+            <span class="distance__label">Me</span>
+          </div>
+          <div class="distance__line" id="distanceLine" role="button" aria-label="Bring the two points closer" tabindex="0">
+            <span class="distance__pulse"></span>
+          </div>
+          <div class="distance__point distance__point--georgi">
+            <span class="distance__dot"></span>
+            <span class="distance__label">Georgi</span>
+          </div>
+        </div>
+
+        <div class="distance-message" id="distanceMessage" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- ============ SCREEN 6 — LITTLE INTERACTIVE HEART ============ -->
+    <section class="screen" data-screen="6" data-title="One Last Thing">
+      <div class="screen__inner screen__inner--center">
+        <p class="lead" data-reveal>One last thing.</p>
+
+        <div class="heart-wrap">
+          <button class="heart" id="heartBtn" type="button" aria-label="A glowing heart — don't click this">
+            <span class="heart__glow"></span>
+            <span class="heart__shape" aria-hidden="true"></span>
+          </button>
+        </div>
+
+        <button class="btn btn--primary btn--ghost" id="dontClickBtn" type="button" data-reveal>
+          <span class="btn__text">Don't click this.</span>
+        </button>
+
+        <div class="final-letter" id="finalLetter" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- ============ SCREEN 7 — FINAL NIGHT ============ -->
+    <section class="screen" data-screen="7" data-title="Final Night">
+      <div class="screen__inner screen__inner--center">
+        <h2 class="display display--final" data-reveal>Goodnight, Georgi.</h2>
+        <p class="lead" data-reveal>Until we're under the same sky.</p>
+        <button class="btn btn--primary btn--glow" id="ambientBtn" type="button" data-reveal>
+          <span class="btn__text">Stay here for a while</span>
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Secret message reveal -->
+  <div class="secret-toast" id="secretToast" aria-live="polite"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
